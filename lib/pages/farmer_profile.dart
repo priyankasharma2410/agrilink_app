@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(FarmerProfileApp());
+  runApp(FarmerProfile());
 }
 
-class FarmerProfileApp extends StatefulWidget {
+class FarmerProfile extends StatefulWidget {
   @override
-  _FarmerProfileAppState createState() => _FarmerProfileAppState();
+  _FarmerProfileState createState() => _FarmerProfileState();
 }
 
-class _FarmerProfileAppState extends State<FarmerProfileApp> {
+class _FarmerProfileState extends State<FarmerProfile> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
-    FarmerProfile(),
+    FarmerProfilePage(),
     FarmerOrdersPage(),
   ];
 
@@ -44,8 +44,8 @@ class _FarmerProfileAppState extends State<FarmerProfileApp> {
   }
 }
 
-class FarmerProfile extends StatelessWidget {
-  const FarmerProfile({super.key});
+class FarmerProfilePage extends StatelessWidget {
+  const FarmerProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
