@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:agrilink_app/components/my_textfield.dart';
-import 'package:agrilink_app/components/my_button.dart';
-import 'package:agrilink_app/components/square_title.dart';
 import 'package:agrilink_app/pages/selection.dart'; // Import SelectionPage
 
+void main() {
+  runApp(AgriLinkApp());
+}
+
+class AgriLinkApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: LoginPage(),
+    );
+  }
+}
+
 class LoginPage extends StatelessWidget {
-  LoginPage({super.key});
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController otpController = TextEditingController();
 
-  // Text editing controllers
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-
-  // Sign-in method with validation and navigation
   void signUserIn(BuildContext context) {
-    if (usernameController.text.isNotEmpty && passwordController.text.isNotEmpty) {
-      // Navigate to SelectionPage if login is valid
+    if (nameController.text.isNotEmpty &&
+        phoneController.text.isNotEmpty &&
+        otpController.text.isNotEmpty) {
+      // Navigate to SelectionPage
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => SelectionPage()),
@@ -22,7 +32,7 @@ class LoginPage extends StatelessWidget {
     } else {
       // Show error message if fields are empty
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid username and password')),
+        const SnackBar(content: Text('Please fill in all fields')),
       );
     }
   }
@@ -30,113 +40,82 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
-      body: SafeArea(
-        child: Center(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 50),
-
-              // Logo
-              const Icon(Icons.lock, size: 100),
-
-              const SizedBox(height: 50),
-
-              // Welcome text
               Text(
-                'Welcome back, you\'ve been missed!',
-                style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                'Welcome to',
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
-
-              const SizedBox(height: 25),
-
-              // Username text field
-              MyTextField(
-                controller: usernameController,
-                hintText: 'Username',
-                obscureText: false,
-              ),
-
-              const SizedBox(height: 10),
-
-              // Password text field
-              MyTextField(
-                controller: passwordController,
-                hintText: 'Password',
-                obscureText: true,
-              ),
-
-              const SizedBox(height: 10),
-
-              // Forgot password?
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Forgot Password?',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
+              Text(
+                'AgriLink',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-
-              const SizedBox(height: 25),
-
-              // Sign-in button
-              MyButton(
-                onTap: () => signUserIn(context), // Call signUserIn with context
-              ),
-
-              const SizedBox(height: 50),
-
-              // Or continue with
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Divider(thickness: 0.5, color: Colors.grey[400]),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: Text('Or continue with',
-                          style: TextStyle(color: Colors.grey[700])),
-                    ),
-                    Expanded(
-                      child: Divider(thickness: 0.5, color: Colors.grey[400]),
-                    ),
-                  ],
+              SizedBox(height: 30),
+              TextField(
+                controller: nameController,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.black,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-
-              const SizedBox(height: 50),
-
-              // Google + Apple sign-in buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  SquareTile(imagePath: 'lib/images/google.png'),
-                  SizedBox(width: 25),
-                  SquareTile(imagePath: 'lib/images/applelogo.png'),
-                ],
+              SizedBox(height: 15),
+              TextField(
+                controller: phoneController,
+                style: TextStyle(color: Colors.white),
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Phone number',
+                  prefixText: '+91 ',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.black,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
-
-              const SizedBox(height: 50),
-
-              // Not a member? Register now
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Not a member?', style: TextStyle(color: Colors.grey[700])),
-                  const SizedBox(width: 4),
-                  const Text(
-                    'Register now',
-                    style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              SizedBox(height: 15),
+              TextField(
+                controller: otpController,
+                style: TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'OTP',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.black,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => signUserIn(context), // Call signUserIn function
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                ],
+                  child: Text(
+                    'Continue',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
               ),
             ],
           ),

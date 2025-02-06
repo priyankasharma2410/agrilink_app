@@ -44,14 +44,88 @@ class _FarmerProfileState extends State<FarmerProfile> {
   }
 }
 
-class FarmerProfilePage extends StatelessWidget {
-  const FarmerProfilePage({super.key});
+class FarmerProfilePage extends StatefulWidget {
+  @override
+  _FarmerProfilePageState createState() => _FarmerProfilePageState();
+}
+
+class _FarmerProfilePageState extends State<FarmerProfilePage> {
+  List<Map<String, String>> farmers = [
+    {'name': 'Raju', 'crop': 'Fruits'},
+    {'name': 'Venkatesh', 'crop': 'Vegetables'},
+  ];
+
+  void _addFarmer(String name, String crop) {
+    setState(() {
+      farmers.add({'name': name, 'crop': crop});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Farmer Profile')),
-      body: const Center(child: Text('Welcome, Farmer!')),
+      appBar: AppBar(title: Text('Farmer Profile')),
+      body: ListView.builder(
+        itemCount: farmers.length,
+        itemBuilder: (context, index) {
+          final farmer = farmers[index];
+          return Card(
+            margin: EdgeInsets.all(10),
+            color: Colors.black,
+            child: ListTile(
+              title: Text(farmer['name']!, style: TextStyle(color: Colors.white, fontSize: 18)),
+              subtitle: Text(farmer['crop']!, style: TextStyle(color: Colors.white70)),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AddFarmerPage(onSubmit: _addFarmer)),
+        ),
+      ),
+    );
+  }
+}
+
+class AddFarmerPage extends StatefulWidget {
+  final Function(String, String) onSubmit;
+  AddFarmerPage({required this.onSubmit});
+
+  @override
+  _AddFarmerPageState createState() => _AddFarmerPageState();
+}
+
+class _AddFarmerPageState extends State<AddFarmerPage> {
+  final _nameController = TextEditingController();
+  final _cropController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Add Farmer')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(controller: _nameController, decoration: InputDecoration(labelText: 'Farmer Name')),
+            TextField(controller: _cropController, decoration: InputDecoration(labelText: 'Crop Type')),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                widget.onSubmit(
+                  _nameController.text,
+                  _cropController.text,
+                );
+                Navigator.pop(context);
+              },
+              child: Text('Add Farmer'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -67,22 +141,10 @@ class _FarmerOrdersPageState extends State<FarmerOrdersPage> {
     {'name': 'Raj', 'product': 'Sugarcane', 'date': '11/09/24', 'status': 'Pending'},
   ];
 
-  void _addOrder(String name, String product, String date, String status) {
-    setState(() {
-      orders.add({'name': name, 'product': product, 'date': date, 'status': status});
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Orders'),
-        actions: [
-          IconButton(icon: Icon(Icons.refresh), onPressed: () {}),
-          IconButton(icon: Icon(Icons.search), onPressed: () {}),
-        ],
-      ),
+      appBar: AppBar(title: Text('Orders')),
       body: ListView.builder(
         itemCount: orders.length,
         itemBuilder: (context, index) {
@@ -104,59 +166,6 @@ class _FarmerOrdersPageState extends State<FarmerOrdersPage> {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AddOrderPage(onSubmit: _addOrder)),
-        ),
-      ),
-    );
-  }
-}
-
-class AddOrderPage extends StatefulWidget {
-  final Function(String, String, String, String) onSubmit;
-  AddOrderPage({required this.onSubmit});
-
-  @override
-  _AddOrderPageState createState() => _AddOrderPageState();
-}
-
-class _AddOrderPageState extends State<AddOrderPage> {
-  final _nameController = TextEditingController();
-  final _productController = TextEditingController();
-  final _dateController = TextEditingController();
-  final _statusController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Add Order')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(controller: _nameController, decoration: InputDecoration(labelText: 'Farmer Name')),
-            TextField(controller: _productController, decoration: InputDecoration(labelText: 'Product')),
-            TextField(controller: _dateController, decoration: InputDecoration(labelText: 'Date')),
-            TextField(controller: _statusController, decoration: InputDecoration(labelText: 'Status')),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                widget.onSubmit(
-                  _nameController.text,
-                  _productController.text,
-                  _dateController.text,
-                  _statusController.text,
-                );
-                Navigator.pop(context);
-              },
-              child: Text('Add Order'),
-            ),
-          ],
-        ),
       ),
     );
   }
