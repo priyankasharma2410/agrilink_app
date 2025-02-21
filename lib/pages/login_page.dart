@@ -1,39 +1,83 @@
 import 'package:flutter/material.dart';
-import 'package:agrilink_app/pages/selection.dart'; // Import SelectionPage
+import 'package:firebase_auth/firebase_auth.dart'; // ✅ Import Firebase Auth
+import 'package:agrilink_app/pages/selection.dart';
 
-void main() {
-  runApp(AgriLinkApp());
-}
-
-class AgriLinkApp extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginPage(),
-    );
-  }
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class LoginPage extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  void signUserIn(BuildContext context) {
-    if (nameController.text.isNotEmpty &&
-        phoneController.text.isNotEmpty &&
-        otpController.text.isNotEmpty) {
-      // Navigate to SelectionPage
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SelectionPage()),
-      );
-    } else {
-      // Show error message if fields are empty
+  String verificationId = ''; // ✅ Stores the verification ID
+  bool otpSent = false; // ✅ Track OTP status
+
+  // ✅ Restrict input to 10 digits
+  String? validatePhoneNumber(String value) {
+    if (value.length != 10) {
+      return 'Enter a valid 10-digit phone number';
+    }
+    return null;
+  }
+
+  // ✅ Send OTP
+  Future<void> sendOtp() async {
+    String phoneNumber = '+91${phoneController.text}';
+    if (phoneController.text.length != 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        SnackBar(content: Text('Please enter a valid 10-digit phone number')),
       );
+      return;
+    }
+
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await _auth.signInWithCredential(credential);
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SelectionPage()));
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          setState(() {
+            this.verificationId = verificationId;
+            otpSent = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('OTP Sent Successfully!')));
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          this.verificationId = verificationId;
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  // ✅ Verify OTP
+  Future<void> verifyOtp() async {
+    String otp = otpController.text.trim();
+    if (otp.isEmpty || otp.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Enter a valid 6-digit OTP')));
+      return;
+    }
+
+    try {
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: otp,
+      );
+
+      await _auth.signInWithCredential(credential);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SelectionPage()));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid OTP. Try again.')));
     }
   }
 
@@ -48,37 +92,21 @@ class LoginPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Welcome to',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
+              Text('Welcome to', style: TextStyle(color: Colors.white, fontSize: 24)),
               Text(
                 'AgriLink',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 30),
-              TextField(
-                controller: nameController,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.black,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              SizedBox(height: 15),
+
+              // ✅ Phone Number Field (Restricts to 10 digits)
               TextField(
                 controller: phoneController,
                 style: TextStyle(color: Colors.white),
                 keyboardType: TextInputType.phone,
+                maxLength: 10, // Restrict input to 10 digits
                 decoration: InputDecoration(
-                  labelText: 'Phone number',
+                  labelText: 'Phone Number',
                   prefixText: '+91 ',
                   labelStyle: TextStyle(color: Colors.white70),
                   filled: true,
@@ -87,32 +115,36 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 15),
-              TextField(
-                controller: otpController,
-                style: TextStyle(color: Colors.white),
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'OTP',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.black,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+
+              // ✅ OTP Field (Only shown after OTP is sent)
+              if (otpSent)
+                TextField(
+                  controller: otpController,
+                  style: TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  decoration: InputDecoration(
+                    labelText: 'Enter OTP',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.black,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                 ),
-              ),
               SizedBox(height: 30),
+
+              // ✅ Send OTP / Verify OTP Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => signUserIn(context), // Call signUserIn function
+                  onPressed: otpSent ? verifyOtp : sendOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     side: BorderSide(color: Colors.white),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   child: Text(
-                    'Continue',
+                    otpSent ? 'Verify OTP' : 'Send OTP',
                     style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
