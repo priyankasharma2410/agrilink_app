@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart'; // Import Geolocator
-import 'package:speech_to_text/speech_to_text.dart' as stt; // Import SpeechToText
+import 'package:geolocator/geolocator.dart'; // For geolocation
+import 'package:speech_to_text/speech_to_text.dart' as stt; // For speech recognition
+import 'package:flutter_tts/flutter_tts.dart'; // For text-to-speech
 import '../widgets/bottom_nav_bar.dart'; // Ensure this file exists
 
 class ConsumerProfile extends StatefulWidget {
@@ -11,6 +12,7 @@ class ConsumerProfile extends StatefulWidget {
 class _ConsumerProfileState extends State<ConsumerProfile> {
   Position? _currentPosition;
   late stt.SpeechToText _speech;
+  late FlutterTts _flutterTts;
   bool _isListening = false;
   String _command = "Tap mic & speak a command...";
 
@@ -19,8 +21,14 @@ class _ConsumerProfileState extends State<ConsumerProfile> {
     super.initState();
     _getCurrentLocation();
     _speech = stt.SpeechToText();
+    _flutterTts = FlutterTts();
+
+    Future.delayed(Duration(seconds: 1), () {
+      _speak("Welcome to AgriLink. Tap the mic and speak a product name to search.");
+    });
   }
 
+  // Get user's current location
   void _getCurrentLocation() async {
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
@@ -29,6 +37,7 @@ class _ConsumerProfileState extends State<ConsumerProfile> {
     });
   }
 
+  // Start listening for voice commands
   void _listen() async {
     if (!_isListening) {
       bool available = await _speech.initialize(
@@ -51,46 +60,42 @@ class _ConsumerProfileState extends State<ConsumerProfile> {
     }
   }
 
+  // Perform action based on voice command
   void _performAction(String command) {
     command = command.toLowerCase();
+    _speak("Searching for $command"); // Announce the command
 
     for (var product in products) {
       if (command.contains(product["name"].toLowerCase())) {
+        _speak("Opening ${product['name']} details");
         Navigator.pushNamed(
           context,
           '/productDetails',
           arguments: product,
         );
-        return; // Exit the function once a product is matched and navigated
+        return; // Exit function if a product is matched
       }
     }
 
+    _speak("No matching product found");
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("No matching product found!")),
     );
   }
 
+  // Text-to-Speech function
+  Future<void> _speak(String text) async {
+    await _flutterTts.setLanguage("en-US");
+    await _flutterTts.setPitch(1.0);
+    await _flutterTts.speak(text);
+  }
+
+  // Sample product data
   final List<Map<String, dynamic>> products = [
-    {
-      "name": "Roma Tomatoes",
-      "price": "₹50/kg",
-      "image": "assets/tomato.jpg",
-    },
-    {
-      "name": "Golden Potatoes",
-      "price": "₹30/kg",
-      "image": "assets/potato.jpg",
-    },
-    {
-      "name": "Organic Wheat",
-      "price": "₹40/kg",
-      "image": "assets/wheat.jpg",
-    },
-    {
-      "name": "Carrots",
-      "price": "₹60/kg",
-      "image": "assets/carrot.jpg",
-    },
+    {"name": "Roma Tomatoes", "price": "₹50/kg", "image": "assets/tomato.jpg"},
+    {"name": "Golden Potatoes", "price": "₹30/kg", "image": "assets/potato.jpg"},
+    {"name": "Organic Wheat", "price": "₹40/kg", "image": "assets/wheat.jpg"},
+    {"name": "Carrots", "price": "₹60/kg", "image": "assets/carrot.jpg"},
   ];
 
   @override
@@ -124,6 +129,7 @@ class _ConsumerProfileState extends State<ConsumerProfile> {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
+                      _speak("Opening ${products[index]['name']} details");
                       Navigator.pushNamed(
                         context,
                         '/productDetails',
@@ -180,8 +186,7 @@ class ProductCard extends StatelessWidget {
             child: Column(
               children: [
                 Text(name,
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Text(price,
                     style: TextStyle(fontSize: 16, color: Colors.grey[600])),
               ],

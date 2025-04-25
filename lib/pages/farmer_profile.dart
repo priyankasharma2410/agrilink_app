@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(FarmerProfile());
-}
+import 'package:flutter_tts/flutter_tts.dart';
 
 class FarmerProfile extends StatefulWidget {
   @override
@@ -10,162 +7,108 @@ class FarmerProfile extends StatefulWidget {
 }
 
 class _FarmerProfileState extends State<FarmerProfile> {
+  final FlutterTts flutterTts = FlutterTts();
+  bool _isTtsEnabled = true;
   int _selectedIndex = 0;
-  final List<Widget> _pages = [
-    FarmerProfilePage(),
-    FarmerOrdersPage(),
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _speakOrderDetails();
+  }
+
+  Future<void> _speakOrderDetails() async {
+    if (_isTtsEnabled) {
+      String orderText = "You have new orders. Nishi Poojari ordered 6kg for ₹256.50, quoted at ₹230 from Mysuru. "
+          "Shipped order: Sudheer A, 3kg for ₹128 from Bengaluru. No pending orders.";
+      await flutterTts.speak(orderText);
+    }
+  }
+
+  Future<void> _stopTts() async => await flutterTts.stop();
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+    if (index == _selectedIndex) return;
+    setState(() => _selectedIndex = index);
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: _pages[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: Colors.blue,
-          unselectedItemColor: Colors.white,
-          backgroundColor: Colors.black,
-          onTap: _onItemTapped,
-          items: [
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Orders'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class FarmerProfilePage extends StatefulWidget {
-  @override
-  _FarmerProfilePageState createState() => _FarmerProfilePageState();
-}
-
-class _FarmerProfilePageState extends State<FarmerProfilePage> {
-  List<Map<String, String>> farmers = [
-    {'name': 'Raju', 'crop': 'Fruits'},
-    {'name': 'Venkatesh', 'crop': 'Vegetables'},
-  ];
-
-  void _addFarmer(String name, String crop) {
-    setState(() {
-      farmers.add({'name': name, 'crop': crop});
-    });
+    switch (index) {
+      case 1:
+        Navigator.pushReplacementNamed(context, '/community');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/profilee');
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Farmer Profile')),
-      body: ListView.builder(
-        itemCount: farmers.length,
-        itemBuilder: (context, index) {
-          final farmer = farmers[index];
-          return Card(
-            margin: EdgeInsets.all(10),
-            color: Colors.black,
-            child: ListTile(
-              title: Text(farmer['name']!, style: TextStyle(color: Colors.white, fontSize: 18)),
-              subtitle: Text(farmer['crop']!, style: TextStyle(color: Colors.white70)),
-            ),
-          );
-        },
+      appBar: AppBar(
+        title: Text("Orders", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green,
+        actions: [
+          IconButton(icon: Icon(Icons.refresh, color: Colors.white), onPressed: _speakOrderDetails),
+          IconButton(
+            icon: Icon(_isTtsEnabled ? Icons.volume_up : Icons.volume_off, color: Colors.white),
+            onPressed: () {
+              setState(() => _isTtsEnabled = !_isTtsEnabled);
+              if (!_isTtsEnabled) _stopTts();
+            },
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AddFarmerPage(onSubmit: _addFarmer)),
-        ),
+      body: _buildBody(),
+      bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: Colors.green,
+        unselectedItemColor: Colors.black,
+        currentIndex: 0,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: "Orders"),
+          BottomNavigationBarItem(icon: Icon(Icons.group), label: "Community"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Farmer Profile"),
+        ],
       ),
     );
   }
-}
 
-class AddFarmerPage extends StatefulWidget {
-  final Function(String, String) onSubmit;
-  AddFarmerPage({required this.onSubmit});
+  Widget _buildBody() {
+    return Container(
+      color: Colors.green[100],
+      padding: const EdgeInsets.all(16.0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text("New Orders", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        SizedBox(height: 10),
+        _buildOrderTile("Nishi Poojari", "6kg", "₹256.50", "₹230", "Mysuru"),
+        SizedBox(height: 20),
+        Text("Shipped", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        SizedBox(height: 10),
+        _buildOrderTile("Sudheer A", "3kg", "₹128", null, "Bengaluru"),
+        SizedBox(height: 20),
+        Text("Pending", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        SizedBox(height: 10),
+        Text("No orders pending 😊", style: TextStyle(fontSize: 16)),
+      ]),
+    );
+  }
 
-  @override
-  _AddFarmerPageState createState() => _AddFarmerPageState();
-}
-
-class _AddFarmerPageState extends State<AddFarmerPage> {
-  final _nameController = TextEditingController();
-  final _cropController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Add Farmer')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
+  Widget _buildOrderTile(String name, String qty, String price, String? quotedPrice, String place) {
+    return Card(
+      color: Colors.white,
+      child: ListTile(
+        leading: CircleAvatar(backgroundColor: Colors.green[300], child: Icon(Icons.person, color: Colors.white)),
+        title: Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(controller: _nameController, decoration: InputDecoration(labelText: 'Farmer Name')),
-            TextField(controller: _cropController, decoration: InputDecoration(labelText: 'Crop Type')),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                widget.onSubmit(
-                  _nameController.text,
-                  _cropController.text,
-                );
-                Navigator.pop(context);
-              },
-              child: Text('Add Farmer'),
-            ),
+            Text("Qt: $qty"),
+            Text("Price: $price"),
+            if (quotedPrice != null) Text("Customer Quoting: $quotedPrice"),
+            Text("Place: $place"),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class FarmerOrdersPage extends StatefulWidget {
-  @override
-  _FarmerOrdersPageState createState() => _FarmerOrdersPageState();
-}
-
-class _FarmerOrdersPageState extends State<FarmerOrdersPage> {
-  List<Map<String, String>> orders = [
-    {'name': 'Sonu', 'product': 'Apple', 'date': '11/12/24', 'status': 'Confirmed'},
-    {'name': 'Raj', 'product': 'Sugarcane', 'date': '11/09/24', 'status': 'Pending'},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Orders')),
-      body: ListView.builder(
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          final order = orders[index];
-          return Card(
-            margin: EdgeInsets.all(10),
-            color: Colors.black,
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Name: ${order['name']}', style: TextStyle(color: Colors.white, fontSize: 18)),
-                  Text('Product: ${order['product']}', style: TextStyle(color: Colors.white, fontSize: 18)),
-                  Text('Date: ${order['date']}', style: TextStyle(color: Colors.white, fontSize: 18)),
-                  Text('Status: ${order['status']}', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          );
-        },
+        trailing: Icon(Icons.chat_bubble_outline, color: Colors.green),
       ),
     );
   }
