@@ -1,15 +1,14 @@
-import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class MLService {
-  Interpreter? _interpreter;
+Future<String> getCropRecommendation(List<double> features) async {
+  final url = Uri.parse('http://your-local-or-live-ip:5000/predict');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'features': features}),
+  );
 
-  Future<void> loadModel() async {
-    _interpreter = await Interpreter.fromAsset('assets/model.tflite');
-  }
-
-  List<dynamic> runModel(List<double> input) {
-    var output = List.filled(1, 0).reshape([1, 1]); // Adjust based on model output
-    _interpreter?.run(input, output);
-    return output;
-  }
+  final data = jsonDecode(response.body);
+  return data['prediction'];
 }
