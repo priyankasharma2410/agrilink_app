@@ -2,6 +2,7 @@
 
 ### AgriLink is a Flutter-based mobile application that bridges the gap between farmers and consumers, offering a direct marketplace powered by AI, real-time insights, and voice-friendly technology. It empowers farmers to sell their produce directly while giving customers access to fresh, locally grown crops.
 
+
 🚀 Features
 
     📱 Cross-Platform App (built with Flutter)
